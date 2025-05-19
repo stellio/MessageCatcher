@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.view.Gravity
 import android.view.Menu
+import android.view.View
 import android.view.MenuItem
 import android.view.ViewGroup
 import android.widget.*
@@ -188,6 +189,11 @@ class MainActivity : AppCompatActivity() {
                             ).apply {
                                 setMargins(0, 0, 0, 16)
                             }
+                            isClickable = true
+                            isFocusable = true
+                            setOnClickListener {
+                                showMessageContextMenu(it, message)
+                            }
                         }
 
                         val cardContent = LinearLayout(this@MainActivity).apply {
@@ -242,6 +248,24 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun showMessageContextMenu(view: View, message: Message) {
+        val popup = PopupMenu(this, view)
+        popup.menu.add("Копировать текст")
+        popup.setOnMenuItemClickListener { item ->
+            when (item.title) {
+                "Копировать текст" -> {
+                    val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    val clip = ClipData.newPlainText("Message", message.content)
+                    clipboard.setPrimaryClip(clip)
+                    Toast.makeText(this, "Текст скопирован", Toast.LENGTH_SHORT).show()
+                    true
+                }
+                else -> false
+            }
+        }
+        popup.show()
     }
 
     private fun showClearConfirmationDialog() {
