@@ -29,6 +29,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var messagesContainer: LinearLayout
     private lateinit var database: AppDatabase
     private val dateFormat = SimpleDateFormat("HH:mm, dd MMM yyyy", Locale.getDefault())
+    private var filteredSenders = setOf<String>()
 
     // App-specific colors
     private val viberColor = Color.parseColor("#7360F2") // Viber purple
@@ -74,7 +75,17 @@ class MainActivity : AppCompatActivity() {
         ))
 
         setContentView(mainLayout)
+        loadFilteredSenders()
         loadNotificationLog()
+    }
+
+    private fun loadFilteredSenders() {
+        lifecycleScope.launch {
+            database.filteredSenderDao().getAllFilteredSenders().collectLatest { senders ->
+                filteredSenders = senders.map { it.senderName }.toSet()
+                loadNotificationLog()
+            }
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -116,7 +127,9 @@ class MainActivity : AppCompatActivity() {
             database.messageDao().getAllMessages().collectLatest { messages ->
                 messagesContainer.removeAllViews()
                 
-                if (messages.isEmpty()) {
+                val filteredMessages = messages.filter { it.sender !in filteredSenders }
+                
+                if (filteredMessages.isEmpty()) {
                     val emptyView = TextView(this@MainActivity).apply {
                         text = "Нет сообщений"
                         textSize = 18f
@@ -127,7 +140,7 @@ class MainActivity : AppCompatActivity() {
                     return@collectLatest
                 }
 
-                val groupedMessages = messages.groupBy { it.appName }
+                val groupedMessages = filteredMessages.groupBy { it.appName }
                 groupedMessages.forEach { (appName, appMessages) ->
                     // App header with icon
                     val appHeaderLayout = LinearLayout(this@MainActivity).apply {
@@ -254,6 +267,7 @@ class MainActivity : AppCompatActivity() {
     private fun showMessageContextMenu(view: View, message: Message) {
         val popup = PopupMenu(this, view)
         popup.menu.add("Копировать текст")
+        popup.menu.add(if (message.sender in filteredSenders) "Убрать из фильтра" else "Добавить в фильтр")
         popup.setOnMenuItemClickListener { item ->
             when (item.title) {
                 "Копировать текст" -> {
@@ -261,6 +275,20 @@ class MainActivity : AppCompatActivity() {
                     val clip = ClipData.newPlainText("Message", message.content)
                     clipboard.setPrimaryClip(clip)
                     Toast.makeText(this, "Текст скопирован", Toast.LENGTH_SHORT).show()
+                    true
+                }
+                "Добавить в фильтр" -> {
+                    lifecycleScope.launch {
+                        database.filteredSenderDao().insertFilteredSender(FilteredSender(message.sender))
+                        Toast.makeText(this@MainActivity, "Отправитель добавлен в фильтр", Toast.LENGTH_SHORT).show()
+                    }
+                    true
+                }
+                "Убрать из фильтра" -> {
+                    lifecycleScope.launch {
+                        database.filteredSenderDao().deleteFilteredSender(FilteredSender(message.sender))
+                        Toast.makeText(this@MainActivity, "Отправитель убран из фильтра", Toast.LENGTH_SHORT).show()
+                    }
                     true
                 }
                 else -> false

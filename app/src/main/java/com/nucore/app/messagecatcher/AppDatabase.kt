@@ -6,10 +6,11 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
-@Database(entities = [Message::class], version = 1)
+@Database(entities = [Message::class, FilteredSender::class], version = 1)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun messageDao(): MessageDao
+    abstract fun filteredSenderDao(): FilteredSenderDao
 
     companion object {
         @Volatile
