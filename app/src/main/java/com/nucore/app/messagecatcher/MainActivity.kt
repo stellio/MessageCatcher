@@ -107,6 +107,13 @@ class MainActivity : AppCompatActivity() {
         mainLayout.addView(warningLayout)
     }
 
+    private fun Context.getActionBarHeight(): Int {
+        val styledAttributes = theme.obtainStyledAttributes(intArrayOf(android.R.attr.actionBarSize))
+        val height = styledAttributes.getDimension(0, 0f).toInt()
+        styledAttributes.recycle()
+        return height
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         database = AppDatabase.getDatabase(this)
@@ -114,7 +121,7 @@ class MainActivity : AppCompatActivity() {
         mainLayout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(Color.WHITE)
-            setPadding(0, 30, 0, 0)
+            setPadding(0, getActionBarHeight(), 0, 0)
         }
 
         // Header
