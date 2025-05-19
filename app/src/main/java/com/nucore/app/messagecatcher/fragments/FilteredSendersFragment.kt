@@ -1,6 +1,8 @@
-package com.nucore.app.messagecatcher
+package com.nucore.app.messagecatcher.fragments
 
+import android.graphics.Color
 import android.os.Bundle
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,6 +11,9 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.card.MaterialCardView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.nucore.app.messagecatcher.dao.AppDatabase
+import com.nucore.app.messagecatcher.dao.FilteredSender
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -29,7 +34,7 @@ class FilteredSendersFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        database = AppDatabase.getDatabase(requireContext())
+        database = AppDatabase.Companion.getDatabase(requireContext())
         loadFilteredSenders()
     }
 
@@ -67,14 +72,14 @@ class FilteredSendersFragment : Fragment() {
 
                     val cardContent = LinearLayout(context).apply {
                         orientation = LinearLayout.HORIZONTAL
-                        gravity = android.view.Gravity.CENTER_VERTICAL
+                        gravity = Gravity.CENTER_VERTICAL
                         setPadding(16, 16, 16, 16)
                     }
 
                     val senderText = TextView(context).apply {
                         text = sender.senderName
                         textSize = 16f
-                        setTextColor(android.graphics.Color.BLACK)
+                        setTextColor(Color.BLACK)
                         layoutParams = LinearLayout.LayoutParams(
                             0,
                             LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -85,7 +90,7 @@ class FilteredSendersFragment : Fragment() {
                     val removeButton = TextView(context).apply {
                         text = "✕"
                         textSize = 20f
-                        setTextColor(android.graphics.Color.RED)
+                        setTextColor(Color.RED)
                         setPadding(16, 0, 0, 0)
                     }
 
@@ -99,7 +104,7 @@ class FilteredSendersFragment : Fragment() {
     }
 
     private fun showRemoveConfirmationDialog(senderName: String) {
-        com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+        MaterialAlertDialogBuilder(requireContext())
             .setTitle("Убрать из фильтра")
             .setMessage("Убрать $senderName из списка отфильтрованных отправителей?")
             .setPositiveButton("Убрать") { _, _ ->
@@ -110,4 +115,4 @@ class FilteredSendersFragment : Fragment() {
             .setNegativeButton("Отмена", null)
             .show()
     }
-} 
+}

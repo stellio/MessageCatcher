@@ -1,4 +1,4 @@
-package com.nucore.app.messagecatcher
+package com.nucore.app.messagecatcher.dao
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -12,4 +12,4 @@ data class Message(
     val appName: String,
     val sender: String,
     val content: String
-) 
+)

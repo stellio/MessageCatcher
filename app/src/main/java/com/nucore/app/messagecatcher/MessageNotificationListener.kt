@@ -3,6 +3,8 @@ package com.nucore.app.messagecatcher
 import android.content.Intent
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
+import com.nucore.app.messagecatcher.dao.AppDatabase
+import com.nucore.app.messagecatcher.dao.Message
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

@@ -1,6 +1,7 @@
-package com.nucore.app.messagecatcher
+package com.nucore.app.messagecatcher.dao
 
 import androidx.room.*
+import com.nucore.app.messagecatcher.dao.Message
 import kotlinx.coroutines.flow.Flow
 
 @Dao

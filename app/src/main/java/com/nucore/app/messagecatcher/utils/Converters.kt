@@ -1,4 +1,4 @@
-package com.nucore.app.messagecatcher
+package com.nucore.app.messagecatcher.utils
 
 import androidx.room.TypeConverter
 import java.util.Date
@@ -13,4 +13,4 @@ class Converters {
     fun dateToTimestamp(date: Date?): Long? {
         return date?.time
     }
-} 
+}

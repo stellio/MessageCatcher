@@ -1,4 +1,4 @@
-package com.nucore.app.messagecatcher
+package com.nucore.app.messagecatcher.dao
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -7,4 +7,4 @@ import androidx.room.PrimaryKey
 data class FilteredSender(
     @PrimaryKey
     val senderName: String
-) 
+)
