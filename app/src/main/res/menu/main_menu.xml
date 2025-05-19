@@ -9,6 +9,12 @@
         app:showAsAction="never" />
 
     <item
+        android:id="@+id/menu_filtered_senders"
+        android:icon="@android:drawable/ic_menu_sort_by_size"
+        android:title="Отфильтрованные отправители"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/menu_clear"
         android:icon="@android:drawable/ic_menu_delete"
         android:title="Очистить"

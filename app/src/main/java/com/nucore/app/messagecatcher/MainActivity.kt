@@ -99,6 +99,10 @@ class MainActivity : AppCompatActivity() {
                 startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
                 true
             }
+            R.id.menu_filtered_senders -> {
+                showFilteredSendersFragment()
+                true
+            }
             R.id.menu_clear -> {
                 showClearConfirmationDialog()
                 true
@@ -321,5 +325,12 @@ class MainActivity : AppCompatActivity() {
             database.messageDao().deleteAll()
             Toast.makeText(this@MainActivity, "История очищена", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun showFilteredSendersFragment() {
+        supportFragmentManager.beginTransaction()
+            .replace(android.R.id.content, FilteredSendersFragment())
+            .addToBackStack(null)
+            .commit()
     }
 }
