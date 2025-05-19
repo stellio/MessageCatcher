@@ -3,6 +3,7 @@ package com.nucore.app.messagecatcher
 import android.annotation.SuppressLint
 import android.content.*
 import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.provider.Settings
 import android.view.Gravity
@@ -25,6 +26,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var messagesContainer: LinearLayout
     private lateinit var database: AppDatabase
     private val dateFormat = SimpleDateFormat("HH:mm, dd MMM yyyy", Locale.getDefault())
+
+    // App-specific colors
+    private val viberColor = Color.parseColor("#7360F2") // Viber purple
+    private val telegramColor = Color.parseColor("#0088cc") // Telegram blue
+    private val viberLightColor = Color.parseColor("#F0EDFF") // Light purple for Viber
+    private val telegramLightColor = Color.parseColor("#E6F7FF") // Light blue for Telegram
 
     private val updateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -153,21 +160,61 @@ class MainActivity : AppCompatActivity() {
 
                 val groupedMessages = messages.groupBy { it.appName }
                 groupedMessages.forEach { (appName, appMessages) ->
-                    // App header
+                    // App header with icon
+                    val appHeaderLayout = LinearLayout(this@MainActivity).apply {
+                        orientation = LinearLayout.HORIZONTAL
+                        gravity = Gravity.CENTER_VERTICAL
+                        setPadding(0, 16, 0, 8)
+                    }
+
+                    val appIcon = ImageView(this@MainActivity).apply {
+                        setImageResource(
+                            when (appName) {
+                                "Viber" -> android.R.drawable.ic_menu_send
+                                "Telegram" -> android.R.drawable.ic_menu_share
+                                else -> android.R.drawable.ic_menu_info_details
+                            }
+                        )
+                        setColorFilter(
+                            when (appName) {
+                                "Viber" -> viberColor
+                                "Telegram" -> telegramColor
+                                else -> Color.GRAY
+                            }
+                        )
+                        layoutParams = LinearLayout.LayoutParams(32, 32)
+                    }
+
                     val appHeader = TextView(this@MainActivity).apply {
                         text = appName
                         textSize = 20f
-                        setTextColor(ContextCompat.getColor(context, android.R.color.system_accent1_600))
-                        setPadding(0, 16, 0, 8)
+                        setTextColor(
+                            when (appName) {
+                                "Viber" -> viberColor
+                                "Telegram" -> telegramColor
+                                else -> Color.GRAY
+                            }
+                        )
+                        setTypeface(null, android.graphics.Typeface.BOLD)
+                        setPadding(8, 0, 0, 0)
                     }
-                    messagesContainer.addView(appHeader)
+
+                    appHeaderLayout.addView(appIcon)
+                    appHeaderLayout.addView(appHeader)
+                    messagesContainer.addView(appHeaderLayout)
 
                     // Messages
                     appMessages.forEach { message ->
                         val card = MaterialCardView(this@MainActivity).apply {
-                            radius = 8f
+                            radius = 12f
                             cardElevation = 4f
-                            setCardBackgroundColor(Color.WHITE)
+                            setCardBackgroundColor(
+                                when (appName) {
+                                    "Viber" -> viberLightColor
+                                    "Telegram" -> telegramLightColor
+                                    else -> Color.WHITE
+                                }
+                            )
                             layoutParams = LinearLayout.LayoutParams(
                                 LinearLayout.LayoutParams.MATCH_PARENT,
                                 LinearLayout.LayoutParams.WRAP_CONTENT
@@ -189,7 +236,13 @@ class MainActivity : AppCompatActivity() {
                         val senderText = TextView(this@MainActivity).apply {
                             text = message.sender
                             textSize = 16f
-                            setTextColor(Color.BLACK)
+                            setTextColor(
+                                when (appName) {
+                                    "Viber" -> viberColor
+                                    "Telegram" -> telegramColor
+                                    else -> Color.BLACK
+                                }
+                            )
                             setTypeface(null, android.graphics.Typeface.BOLD)
                             layoutParams = LinearLayout.LayoutParams(
                                 0,
