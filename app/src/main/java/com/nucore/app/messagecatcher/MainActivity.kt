@@ -49,6 +49,7 @@ class MainActivity : AppCompatActivity() {
         val mainLayout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(Color.WHITE)
+            setPadding(0, 30, 0, 0)
         }
 
         // Header
@@ -292,13 +293,5 @@ class MainActivity : AppCompatActivity() {
             database.messageDao().deleteAll()
             Toast.makeText(this@MainActivity, "История очищена", Toast.LENGTH_SHORT).show()
         }
-    }
-
-    private fun isNotificationAccessEnabled(): Boolean {
-        val enabledListeners = Settings.Secure.getString(
-            contentResolver,
-            "enabled_notification_listeners"
-        )
-        return enabledListeners?.contains(packageName) == true
     }
 }
