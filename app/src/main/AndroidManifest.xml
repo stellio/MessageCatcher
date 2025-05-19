@@ -12,7 +12,7 @@
         android:allowBackup="true"
         android:label="MessageCatcher"
         android:supportsRtl="true"
-        android:theme="@style/Theme.AppCompat.Light.DarkActionBar">
+        android:theme="@style/Theme.MaterialComponents.Light.DarkActionBar">
 
         <activity android:name=".MainActivity"
             android:exported="true">
