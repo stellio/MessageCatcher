@@ -6,11 +6,16 @@ import android.os.Bundle
 import android.provider.Settings
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import java.io.File
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var textView: TextView
+    private lateinit var database: AppDatabase
 
     private val updateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -20,6 +25,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        database = AppDatabase.getDatabase(this)
 
         val layout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -77,62 +83,36 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadNotificationLog() {
-        val dir = File(getExternalFilesDir(null), "MessageLogs")
-        if (!dir.exists()) {
-            textView.text = "Файлы пока не созданы или уведомлений ещё не было."
-            return
-        }
-
-        val viberFile = File(dir, "viber_notifications.txt")
-        val telegramFile = File(dir, "telegram_notifications.txt")
-
-        val viberContent = if (viberFile.exists()) viberFile.readText() else ""
-        val telegramContent = if (telegramFile.exists()) telegramFile.readText() else ""
-
-        textView.text = if (viberContent.isNotEmpty() || telegramContent.isNotEmpty()) {
-            buildString {
-                if (viberContent.isNotEmpty()) {
-                    append("=== Viber сообщения ===\n\n")
-                    append(viberContent)
+        lifecycleScope.launch {
+            database.messageDao().getAllMessages().collectLatest { messages ->
+                if (messages.isEmpty()) {
+                    textView.text = "Сообщений пока нет"
+                    return@collectLatest
                 }
-                if (telegramContent.isNotEmpty()) {
-                    if (viberContent.isNotEmpty()) append("\n\n")
-                    append("=== Telegram сообщения ===\n\n")
-                    append(telegramContent)
+
+                val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                val groupedMessages = messages.groupBy { it.appName }
+
+                textView.text = buildString {
+                    groupedMessages.forEach { (appName, appMessages) ->
+                        append("=== $appName сообщения ===\n\n")
+                        appMessages.forEach { message ->
+                            append("Время: ${dateFormat.format(message.timestamp)}\n")
+                            append("От: ${message.sender}\n")
+                            append("Сообщение: ${message.content}\n\n")
+                        }
+                    }
                 }
             }
-        } else {
-            "Файлы пока не созданы или уведомлений ещё не было."
         }
     }
 
     private fun clearNotificationLog() {
-        val dir = File(getExternalFilesDir(null), "MessageLogs")
-        if (!dir.exists()) {
-            Toast.makeText(this, "Файлы уже пусты", Toast.LENGTH_SHORT).show()
-            return
+        lifecycleScope.launch {
+            database.messageDao().deleteAll()
+            Toast.makeText(this@MainActivity, "Логи очищены", Toast.LENGTH_SHORT).show()
+            textView.text = "Сообщений пока нет"
         }
-
-        val viberFile = File(dir, "viber_notifications.txt")
-        val telegramFile = File(dir, "telegram_notifications.txt")
-
-        var deleted = false
-        if (viberFile.exists()) {
-            viberFile.delete()
-            deleted = true
-        }
-        if (telegramFile.exists()) {
-            telegramFile.delete()
-            deleted = true
-        }
-
-        if (deleted) {
-            Toast.makeText(this, "Логи очищены", Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(this, "Файлы уже пусты", Toast.LENGTH_SHORT).show()
-        }
-        
-        textView.text = "Файлы пока не созданы или уведомлений ещё не было."
     }
 
     private fun isNotificationAccessEnabled(): Boolean {

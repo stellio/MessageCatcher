@@ -3,12 +3,18 @@ package com.nucore.app.messagecatcher
 import android.content.Intent
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
-import java.io.File
-import java.io.FileWriter
-import java.text.SimpleDateFormat
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.util.*
 
 class MessageNotificationListener : NotificationListenerService() {
+    private lateinit var database: AppDatabase
+
+    override fun onCreate() {
+        super.onCreate()
+        database = AppDatabase.getDatabase(this)
+    }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         when (sbn.packageName) {
@@ -27,18 +33,14 @@ class MessageNotificationListener : NotificationListenerService() {
         val title = extras.getCharSequence("android.title") ?: "Без названия"
         val text = extras.getCharSequence("android.text") ?: return
 
-        val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-            .format(Date())
+        val message = Message(
+            timestamp = Date(),
+            appName = "Viber",
+            sender = title.toString(),
+            content = text.toString()
+        )
 
-        val entry = """
-            Время: $timestamp
-            Приложение: Viber
-            От: $title
-            Сообщение: $text
-
-        """.trimIndent()
-
-        saveToFile(entry, "viber_notifications.txt")
+        saveMessage(message)
     }
 
     private fun handleTelegramNotification(sbn: StatusBarNotification) {
@@ -46,25 +48,19 @@ class MessageNotificationListener : NotificationListenerService() {
         val title = extras.getCharSequence("android.title") ?: "Без названия"
         val text = extras.getCharSequence("android.text") ?: return
 
-        val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-            .format(Date())
+        val message = Message(
+            timestamp = Date(),
+            appName = "Telegram",
+            sender = title.toString(),
+            content = text.toString()
+        )
 
-        val entry = """
-            Время: $timestamp
-            Приложение: Telegram
-            От: $title
-            Сообщение: $text
-
-        """.trimIndent()
-
-        saveToFile(entry, "telegram_notifications.txt")
+        saveMessage(message)
     }
 
-    private fun saveToFile(data: String, filename: String) {
-        val dir = File(getExternalFilesDir(null), "MessageLogs")
-        if (!dir.exists()) dir.mkdirs()
-
-        val file = File(dir, filename)
-        FileWriter(file, true).use { it.appendLine(data) }
+    private fun saveMessage(message: Message) {
+        CoroutineScope(Dispatchers.IO).launch {
+            database.messageDao().insert(message)
+        }
     }
 }
