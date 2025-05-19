@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.nucore.app.vibercatcher"
+    namespace = "com.nucore.app.messagecatcher"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.nucore.app.vibercatcher"
+        applicationId = "com.nucore.app.messagecatcher"
         minSdk = 24
         targetSdk = 35
         versionCode = 1

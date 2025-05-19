@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "ViberCatcher"
+rootProject.name = "MessageCatcher"
 include(":app")
  
