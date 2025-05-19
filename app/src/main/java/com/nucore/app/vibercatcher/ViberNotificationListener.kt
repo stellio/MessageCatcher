@@ -1,5 +1,4 @@
-package com.nucore.app.vibercatcher
-
+package com.nucore.app.messagecatcher
 
 import android.content.Intent
 import android.service.notification.NotificationListenerService
@@ -9,11 +8,21 @@ import java.io.FileWriter
 import java.text.SimpleDateFormat
 import java.util.*
 
-class ViberNotificationListener : NotificationListenerService() {
+class MessageNotificationListener : NotificationListenerService() {
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
-        if (sbn.packageName != "com.viber.voip") return
+        when (sbn.packageName) {
+            "com.viber.voip" -> handleViberNotification(sbn)
+            "org.telegram.messenger" -> handleTelegramNotification(sbn)
+            else -> return
+        }
 
+        // Уведомим активити об обновлении
+        val intent = Intent("com.example.messagecatcher.UPDATE_LOG")
+        sendBroadcast(intent)
+    }
+
+    private fun handleViberNotification(sbn: StatusBarNotification) {
         val extras = sbn.notification.extras
         val title = extras.getCharSequence("android.title") ?: "Без названия"
         val text = extras.getCharSequence("android.text") ?: return
@@ -23,23 +32,39 @@ class ViberNotificationListener : NotificationListenerService() {
 
         val entry = """
             Время: $timestamp
+            Приложение: Viber
             От: $title
             Сообщение: $text
 
         """.trimIndent()
 
-        saveToFile(entry)
-
-        // Уведомим активити об обновлении
-        val intent = Intent("com.example.vibersaver.UPDATE_LOG")
-        sendBroadcast(intent)
+        saveToFile(entry, "viber_notifications.txt")
     }
 
-    private fun saveToFile(data: String) {
-        val dir = File(getExternalFilesDir(null), "ViberLogs")
+    private fun handleTelegramNotification(sbn: StatusBarNotification) {
+        val extras = sbn.notification.extras
+        val title = extras.getCharSequence("android.title") ?: "Без названия"
+        val text = extras.getCharSequence("android.text") ?: return
+
+        val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+            .format(Date())
+
+        val entry = """
+            Время: $timestamp
+            Приложение: Telegram
+            От: $title
+            Сообщение: $text
+
+        """.trimIndent()
+
+        saveToFile(entry, "telegram_notifications.txt")
+    }
+
+    private fun saveToFile(data: String, filename: String) {
+        val dir = File(getExternalFilesDir(null), "MessageLogs")
         if (!dir.exists()) dir.mkdirs()
 
-        val file = File(dir, "viber_notifications.txt")
+        val file = File(dir, filename)
         FileWriter(file, true).use { it.appendLine(data) }
     }
 }

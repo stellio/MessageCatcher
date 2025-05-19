@@ -1,4 +1,4 @@
-package com.nucore.app.vibercatcher
+package com.nucore.app.messagecatcher
 
 import android.annotation.SuppressLint
 import android.content.*
@@ -67,7 +67,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        registerReceiver(updateReceiver, IntentFilter("com.example.vibersaver.UPDATE_LOG"), Context.RECEIVER_NOT_EXPORTED)
+        registerReceiver(updateReceiver, IntentFilter("com.example.messagecatcher.UPDATE_LOG"), Context.RECEIVER_NOT_EXPORTED)
         loadNotificationLog()
     }
 
@@ -77,25 +77,63 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadNotificationLog() {
-        val file = File(getExternalFilesDir(null), "ViberLogs/viber_notifications.txt")
-        textView.text = if (file.exists()) {
-            file.readText()
+        val dir = File(getExternalFilesDir(null), "MessageLogs")
+        if (!dir.exists()) {
+            textView.text = "Файлы пока не созданы или уведомлений ещё не было."
+            return
+        }
+
+        val viberFile = File(dir, "viber_notifications.txt")
+        val telegramFile = File(dir, "telegram_notifications.txt")
+
+        val viberContent = if (viberFile.exists()) viberFile.readText() else ""
+        val telegramContent = if (telegramFile.exists()) telegramFile.readText() else ""
+
+        textView.text = if (viberContent.isNotEmpty() || telegramContent.isNotEmpty()) {
+            buildString {
+                if (viberContent.isNotEmpty()) {
+                    append("=== Viber сообщения ===\n\n")
+                    append(viberContent)
+                }
+                if (telegramContent.isNotEmpty()) {
+                    if (viberContent.isNotEmpty()) append("\n\n")
+                    append("=== Telegram сообщения ===\n\n")
+                    append(telegramContent)
+                }
+            }
         } else {
-            "Файл пока не создан или уведомлений ещё не было."
+            "Файлы пока не созданы или уведомлений ещё не было."
         }
     }
 
     private fun clearNotificationLog() {
-        val file = File(getExternalFilesDir(null), "ViberLogs/viber_notifications.txt")
-        if (file.exists()) {
-            file.delete()
-            Toast.makeText(this, "Лог очищен", Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(this, "Файл уже пуст", Toast.LENGTH_SHORT).show()
+        val dir = File(getExternalFilesDir(null), "MessageLogs")
+        if (!dir.exists()) {
+            Toast.makeText(this, "Файлы уже пусты", Toast.LENGTH_SHORT).show()
+            return
         }
-        textView.text = "Файл пока не создан или уведомлений ещё не было."
-    }
 
+        val viberFile = File(dir, "viber_notifications.txt")
+        val telegramFile = File(dir, "telegram_notifications.txt")
+
+        var deleted = false
+        if (viberFile.exists()) {
+            viberFile.delete()
+            deleted = true
+        }
+        if (telegramFile.exists()) {
+            telegramFile.delete()
+            deleted = true
+        }
+
+        if (deleted) {
+            Toast.makeText(this, "Логи очищены", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "Файлы уже пусты", Toast.LENGTH_SHORT).show()
+        }
+        
+        textView.text = "Файлы пока не созданы или уведомлений ещё не было."
+    }
 
     private fun isNotificationAccessEnabled(): Boolean {
         val enabledListeners = Settings.Secure.getString(
