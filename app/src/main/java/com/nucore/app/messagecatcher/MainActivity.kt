@@ -7,6 +7,8 @@ import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.provider.Settings
 import android.view.Gravity
+import android.view.Menu
+import android.view.MenuItem
 import android.view.ViewGroup
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
@@ -51,56 +53,8 @@ class MainActivity : AppCompatActivity() {
         // Header
         val headerLayout = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            setPadding(16, 16, 16, 16)
             gravity = Gravity.CENTER_VERTICAL
-            setBackgroundColor(ContextCompat.getColor(context, android.R.color.system_accent1_600))
         }
-
-        val titleText = TextView(this).apply {
-            text = "MessageCatcher"
-            textSize = 24f
-            setTextColor(Color.WHITE)
-            layoutParams = LinearLayout.LayoutParams(
-                0,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                1f
-            )
-        }
-
-        val statusIndicator = ImageView(this).apply {
-            setImageResource(android.R.drawable.presence_invisible)
-            setColorFilter(Color.WHITE)
-            layoutParams = LinearLayout.LayoutParams(48, 48)
-        }
-
-        headerLayout.addView(titleText)
-        headerLayout.addView(statusIndicator)
-
-        // Buttons container
-        val buttonsLayout = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            setPadding(16, 8, 16, 8)
-            gravity = Gravity.CENTER
-        }
-
-        val accessButton = MaterialButton(this).apply {
-            text = "Настройки доступа"
-            setIconResource(android.R.drawable.ic_menu_manage)
-            setOnClickListener {
-                startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
-            }
-        }
-
-        val clearButton = MaterialButton(this).apply {
-            text = "Очистить"
-            setIconResource(android.R.drawable.ic_menu_delete)
-            setOnClickListener {
-                showClearConfirmationDialog()
-            }
-        }
-
-        buttonsLayout.addView(accessButton)
-        buttonsLayout.addView(clearButton)
 
         // Messages container
         val scrollView = ScrollView(this)
@@ -111,8 +65,6 @@ class MainActivity : AppCompatActivity() {
         scrollView.addView(messagesContainer)
 
         mainLayout.addView(headerLayout)
-        mainLayout.addView(buttonsLayout)
-        mainLayout.addView(MaterialDivider(this))
         mainLayout.addView(scrollView, LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
             0,
@@ -120,15 +72,30 @@ class MainActivity : AppCompatActivity() {
         ))
 
         setContentView(mainLayout)
-
-        if (!isNotificationAccessEnabled()) {
-            statusIndicator.setImageResource(android.R.drawable.presence_invisible)
-            Toast.makeText(this, "Доступ к уведомлениям отключён", Toast.LENGTH_LONG).show()
-        } else {
-            statusIndicator.setImageResource(android.R.drawable.presence_online)
-        }
-
         loadNotificationLog()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.main_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.menu_settings -> {
+                startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+                true
+            }
+            R.id.menu_clear -> {
+                showClearConfirmationDialog()
+                true
+            }
+            R.id.menu_about -> {
+                showAboutDialog()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 
     override fun onResume() {
@@ -285,6 +252,14 @@ class MainActivity : AppCompatActivity() {
                 clearNotificationLog()
             }
             .setNegativeButton("Отмена", null)
+            .show()
+    }
+
+    private fun showAboutDialog() {
+        MaterialAlertDialogBuilder(this)
+            .setTitle("О приложении")
+            .setMessage("MessageCatcher v1.0\n\nПриложение для отслеживания сообщений из различных мессенджеров.")
+            .setPositiveButton("OK", null)
             .show()
     }
 
