@@ -30,12 +30,14 @@ class MainActivity : AppCompatActivity() {
     private lateinit var database: AppDatabase
     private val dateFormat = SimpleDateFormat("HH:mm, dd MMM yyyy", Locale.getDefault())
     private var filteredSenders = setOf<String>()
+    private lateinit var mainLayout: LinearLayout
 
     // App-specific colors
     private val viberColor = Color.parseColor("#7360F2") // Viber purple
     private val telegramColor = Color.parseColor("#0088cc") // Telegram blue
     private val viberLightColor = Color.parseColor("#F0EDFF") // Light purple for Viber
     private val telegramLightColor = Color.parseColor("#E6F7FF") // Light blue for Telegram
+    private val warningColor = Color.parseColor("#FFA500") // Orange for warning
 
     private val updateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -43,11 +45,69 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun isNotificationListenerEnabled(): Boolean {
+        val packageName = packageName
+        val flat = Settings.Secure.getString(contentResolver, "enabled_notification_listeners")
+        return flat?.contains(packageName) == true
+    }
+
+    private fun showNotificationListenerWarning() {
+        // Remove any existing warning
+        for (i in 0 until mainLayout.childCount) {
+            val child = mainLayout.getChildAt(i)
+            if (child is LinearLayout && child.getChildAt(0) is ImageView && 
+                (child.getChildAt(0) as ImageView).drawable.constantState == 
+                ContextCompat.getDrawable(this, android.R.drawable.ic_dialog_alert)?.constantState) {
+                mainLayout.removeView(child)
+                break
+            }
+        }
+
+        val warningLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setBackgroundColor(warningColor)
+            setPadding(16, 12, 16, 12)
+        }
+
+        val warningIcon = ImageView(this).apply {
+            setImageResource(android.R.drawable.ic_dialog_alert)
+            setColorFilter(Color.WHITE)
+            layoutParams = LinearLayout.LayoutParams(24, 24)
+        }
+
+        val warningText = TextView(this).apply {
+            text = "Для работы приложения необходимо включить доступ к уведомлениям"
+            setTextColor(Color.WHITE)
+            textSize = 14f
+            setPadding(8, 0, 0, 0)
+        }
+
+        val settingsButton = MaterialButton(this).apply {
+            text = "Настройки"
+            setTextColor(Color.WHITE)
+            setBackgroundColor(Color.TRANSPARENT)
+            setOnClickListener {
+                startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+            }
+        }
+
+        warningLayout.addView(warningIcon)
+        warningLayout.addView(warningText, LinearLayout.LayoutParams(
+            0,
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            1f
+        ))
+        warningLayout.addView(settingsButton)
+
+        mainLayout.addView(warningLayout)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         database = AppDatabase.getDatabase(this)
 
-        val mainLayout = LinearLayout(this).apply {
+        mainLayout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(Color.WHITE)
             setPadding(0, 30, 0, 0)
@@ -77,6 +137,9 @@ class MainActivity : AppCompatActivity() {
         setContentView(mainLayout)
         loadFilteredSenders()
         loadNotificationLog()
+        if (!isNotificationListenerEnabled()) {
+            showNotificationListenerWarning()
+        }
     }
 
     private fun loadFilteredSenders() {
@@ -119,6 +182,9 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         registerReceiver(updateReceiver, IntentFilter("com.example.messagecatcher.UPDATE_LOG"), Context.RECEIVER_NOT_EXPORTED)
         loadNotificationLog()
+        if (!isNotificationListenerEnabled()) {
+            showNotificationListenerWarning()
+        }
     }
 
     override fun onPause() {
